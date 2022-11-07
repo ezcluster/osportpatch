@@ -1,2 +1,4 @@
 .idea
 os_config.sh
+
+dist/

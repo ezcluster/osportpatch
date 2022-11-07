@@ -1,3 +1,21 @@
+/*
+Copyright (C) 2022 BROADSoftware
+
+# This file is part of OsPortPatch
+
+OsPortPatch is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+OsPortPatch is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with OsPortPatch.  If not, see <https://www.gnu.org/licenses/gpl-3.0.html>.
+*/
 package main
 
 import (
@@ -12,7 +30,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("osportpatch .....\n")
+	fmt.Printf("osportpatch version 0.1.0\n")
 
 	if len(os.Args) < 4 {
 		usage()
@@ -64,7 +82,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("osportpatch found %d servers and %d ports in this tenant\n", len(serverList), len(portList))
+	fmt.Printf("osportpatch found %d servers and %d ports in this project\n", len(serverList), len(portList))
 
 	serverById := make(map[string]servers.Server)
 
