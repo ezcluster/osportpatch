@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	fmt.Printf("portpatch .....\n")
+	fmt.Printf("osportpatch .....\n")
 
 	if len(os.Args) < 4 {
 		usage()
@@ -31,10 +31,10 @@ func main() {
 	}
 
 	opts := gophercloud.AuthOptions{
-		IdentityEndpoint: os.Getenv("OS_AUTH_URL"),
-		Username:         os.Getenv("OS_USERNAME"),
-		Password:         os.Getenv("OS_PASSWORD"),
-		TenantName:       os.Getenv("OS_PROJECT_NAME"),
+		IdentityEndpoint: getEnvChecked("OS_AUTH_URL"),
+		Username:         getEnvChecked("OS_USERNAME"),
+		Password:         getEnvChecked("OS_PASSWORD"),
+		TenantName:       getEnvChecked("OS_PROJECT_NAME"),
 		DomainName:       "Default",
 	}
 	provider, err := openstack.AuthenticatedClient(opts)
@@ -64,35 +64,50 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Printf("osportpatch found %d servers and %d ports in this tenant\n", len(serverList), len(portList))
+
 	serverById := make(map[string]servers.Server)
 
 	for _, srv := range serverList {
 		if _, ok := serverNameSet[srv.Name]; ok {
-			fmt.Printf("Server %s to be handled\n", srv.Name)
+			//fmt.Printf("Server %s to be handled\n", srv.Name)
 			serverById[srv.ID] = srv
 		} else {
-			fmt.Printf("Server %s NOT to be handled\n", srv.Name)
+			//fmt.Printf("Server %s NOT to be handled\n", srv.Name)
 		}
 	}
 
 	for _, port := range portList {
-		if _, ok := serverById[port.DeviceID]; ok {
-			fmt.Printf("Port %s to be handled (IP:%v)\n", port.ID, port.FixedIPs)
-			handlePort(networkClient, port, ipaddr, remove)
+		if server, ok := serverById[port.DeviceID]; ok {
+			newAddressPairs, err := handlePort(networkClient, port, ipaddr, remove)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("Server '%s': others allowed IP:%v)\n", server.Name, newAddressPairs)
 		}
 	}
-
 }
 
-func handlePort(client *gophercloud.ServiceClient, p ports.Port, ipAddress string, remove bool) {
+func getEnvChecked(vname string) string {
+	s := os.Getenv(vname)
+	if s == "" {
+		fmt.Printf("\nERROR: Missing \"%s\" environment variable\n", vname)
+		os.Exit(2)
+	}
+	return s
+}
+
+func handlePort(client *gophercloud.ServiceClient, p ports.Port, ipAddress string, remove bool) ([]ports.AddressPair, error) {
 	var newAddressPairs []ports.AddressPair
 	if remove {
 		newAddressPairs = removeIp(p.AllowedAddressPairs, ipAddress)
 	} else {
 		newAddressPairs = addIp(p.AllowedAddressPairs, ipAddress)
 	}
-	fmt.Printf("newAddressPairs:%v\n", newAddressPairs)
-	ports.Update(client, p.ID, ports.UpdateOpts{AllowedAddressPairs: &newAddressPairs})
+	//fmt.Printf("newAddressPairs:%v\n", newAddressPairs)
+	r := ports.Update(client, p.ID, ports.UpdateOpts{AllowedAddressPairs: &newAddressPairs})
+	_, err := r.Extract()
+	return newAddressPairs, err
 }
 
 func addIp(src []ports.AddressPair, ipAddress string) []ports.AddressPair {
