@@ -13,16 +13,15 @@
 https://unix.stackexchange.com/questions/155046/determine-if-git-working-directory-is-clean-from-a-script
 
 git tag v0.1.0
-git push origin v0.1.0
 
 To delete:
-
-git tag -d X.X.X
+git tag -d v0.1.0
+git push --delete origin v0.1.0
 
 export GITHUB_TOKEN=....
 
-goreleaser --rm-dist release
+goreleaser  release --rm-dist
 
 If git status is not clean:
 
-goreleaser --rm-dist release --skip-validate
+goreleaser release --rm-dist --skip-validate

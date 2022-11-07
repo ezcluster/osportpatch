@@ -1,5 +1,7 @@
 # Make sure to check the documentation at https://goreleaser.com
 project_name: osportpatch
+universal_binaries:
+  - replace: true
 before:
   hooks:
     # You may remove this if you don't use go modules.
